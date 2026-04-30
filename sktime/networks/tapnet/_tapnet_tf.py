@@ -168,7 +168,7 @@ class TapNetNetwork(BaseDeepNetwork):
         import keras as keras_core
         @register_keras_serializable()
         class GatherLayer(keras.layers.Layer):
-            """Gathers tensor slices at the given indices.
+            """
             Replaces ``keras.layers.Lambda(lambda x: tf.gather(x,
             indices=idx, axis=2))`` with a serialization-safe subclass
             """
