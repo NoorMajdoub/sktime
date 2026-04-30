@@ -175,14 +175,12 @@ class TapNetNetwork(BaseDeepNetwork):
 
             def __init__(self, indices, **kwargs):
                 super().__init__(**kwargs)
-                # store as a plain list so get_config can serialize it
                 self.indices = list(indices)
 
             def call(self, x):
                 return tf.gather(x, indices=self.indices, axis=2)
 
             def get_config(self):
-                """Return config dict for safe serialization."""
                 config = super().get_config()
                 config.update({"indices": self.indices})
                 return config
