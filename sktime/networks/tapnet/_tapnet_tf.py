@@ -164,7 +164,29 @@ class TapNetNetwork(BaseDeepNetwork):
         from tensorflow import keras
 
         from sktime.libs._keras_self_attention import SeqSelfAttention
+        from keras.saving import register_keras_serializable
+        import keras as keras_core
+        @register_keras_serializable()
+        class GatherLayer(keras.layers.Layer):
+            """Gathers tensor slices along axis=2 at the given indices.
+            Replaces ``keras.layers.Lambda(lambda x: tf.gather(x,
+            indices=idx, axis=2))`` with a serialization-safe subclass.
+            Parameters           
+            """
 
+            def __init__(self, indices, **kwargs):
+                super().__init__(**kwargs)
+                # store as a plain list so get_config can serialize it
+                self.indices = list(indices)
+
+            def call(self, x):
+                return tf.gather(x, indices=self.indices, axis=2)
+
+            def get_config(self):
+                """Return config dict for safe serialization."""
+                config = super().get_config()
+                config.update({"indices": self.indices})
+                return config
         input_layer = keras.layers.Input(input_shape)
 
         if self.rp_params[0] < 0:
@@ -193,9 +215,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                 for i in range(self.rp_group):
                     self.idx = np.random.permutation(input_shape[1])[0 : self.rp_dim]
-                    channel = keras.layers.Lambda(
-                        lambda x: tf.gather(x, indices=self.idx, axis=2)
-                    )(input_layer)
+                    channel = GatherLayer(self.idx)(input_layer)
                     # x_conv = x
                     # x_conv = self.conv_1_models[i](x[:, self.idx[i], :])
                     x_conv = keras.layers.Conv1D(
